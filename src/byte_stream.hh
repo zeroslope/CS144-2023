@@ -13,6 +13,22 @@ class ByteStream
 protected:
   uint64_t capacity_;
   // Please add any additional state to the ByteStream here, and not to the Writer and Reader interfaces.
+  std::size_t head_ {0};
+  std::size_t tail_ {0};
+  std::string buffer_;
+
+  uint64_t bytes_pushed_ = 0;
+  uint64_t bytes_popped_ = 0;
+
+  bool has_error_ = false;
+  bool is_closed_ = false;
+  bool is_finished_ = false;
+
+  char pop();
+  void push( char ch);
+
+  bool is_full() const;
+  bool is_empty() const;
 
 public:
   explicit ByteStream( uint64_t capacity );

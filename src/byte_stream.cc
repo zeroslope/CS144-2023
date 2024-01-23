@@ -4,74 +4,107 @@
 
 using namespace std;
 
-ByteStream::ByteStream( uint64_t capacity ) : capacity_( capacity ) {}
+ByteStream::ByteStream( uint64_t capacity )
+  : capacity_( capacity + 1 ), buffer_( string( capacity + 1, 0 ) )
+{}
+
+bool ByteStream::is_full() const
+{
+  return ( tail_ + 1 ) % capacity_ == head_;
+}
+
+bool ByteStream::is_empty() const
+{
+  return head_ == tail_;
+}
+
+void ByteStream::push( char ch )
+{
+  buffer_[tail_] = ch;
+  tail_ += 1;
+  if ( tail_ == capacity_ ) {
+    const size_t len = tail_ - head_;
+    std::copy( buffer_.begin() + head_, buffer_.end(), buffer_.begin() );
+    head_ = 0;
+    tail_ = len;
+  }
+}
+
+char ByteStream::pop()
+{
+  const char ch = buffer_[head_];
+  head_ = ( head_ + 1 ) % capacity_;
+  return ch;
+}
 
 void Writer::push( string data )
 {
-  // Your code here.
-  (void)data;
+  for ( const char i : data ) {
+    if ( ByteStream::is_full() ) {
+      return;
+    }
+    bytes_pushed_ += 1;
+    ByteStream::push( data[i] );
+  }
 }
 
 void Writer::close()
 {
-  // Your code here.
+  is_closed_ = true;
 }
 
 void Writer::set_error()
 {
-  // Your code here.
+  has_error_ = true;
 }
 
 bool Writer::is_closed() const
 {
-  // Your code here.
-  return {};
+  return is_closed_;
 }
 
 uint64_t Writer::available_capacity() const
 {
-  // Your code here.
-  return {};
+  return capacity_ - ( tail_ + capacity_ - head_ ) % capacity_ - 1;
 }
 
 uint64_t Writer::bytes_pushed() const
 {
-  // Your code here.
-  return {};
+  return bytes_pushed_;
 }
 
 string_view Reader::peek() const
 {
-  // Your code here.
-  return {};
+  return { buffer_.begin() + head_, buffer_.begin() + tail_ };
 }
 
 bool Reader::is_finished() const
 {
-  // Your code here.
-  return {};
+  return is_closed_ && bytes_buffered() == 0;
 }
 
 bool Reader::has_error() const
 {
-  // Your code here.
-  return {};
+  return has_error_;
 }
 
 void Reader::pop( uint64_t len )
 {
-  // Your code here.
-  (void)len;
+  for ( uint64_t i = 0; i < len; ++i ) {
+    if ( ByteStream::is_empty() ) {
+      return;
+    }
+    bytes_popped_ += 1;
+    ByteStream::pop();
+  }
 }
 
 uint64_t Reader::bytes_buffered() const
 {
-  // Your code here.
-  return {};
+  return ( tail_ + capacity_ - head_ ) % capacity_;
 }
 
 uint64_t Reader::bytes_popped() const
 {
-  // Your code here.
-  return {};
+  return bytes_popped_;
 }
