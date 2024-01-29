@@ -13,8 +13,8 @@ class ByteStream
 protected:
   uint64_t capacity_;
   // Please add any additional state to the ByteStream here, and not to the Writer and Reader interfaces.
-  std::size_t head_ {0};
-  std::size_t tail_ {0};
+  std::size_t head_ { 0 };
+  std::size_t tail_ { 0 };
   std::string buffer_;
 
   uint64_t bytes_pushed_ = 0;
@@ -25,7 +25,7 @@ protected:
   bool is_finished_ = false;
 
   char pop();
-  void push( char ch);
+  void push( char ch );
 
   bool is_full() const;
   bool is_empty() const;
@@ -43,7 +43,7 @@ public:
 class Writer : public ByteStream
 {
 public:
-  void push( std::string data ); // Push data to stream, but only as much as available capacity allows.
+  void push( const std::string& data ); // Push data to stream, but only as much as available capacity allows.
 
   void close();     // Signal that the stream has reached its ending. Nothing more will be written.
   void set_error(); // Signal that the stream suffered an error.

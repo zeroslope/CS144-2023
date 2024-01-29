@@ -4,9 +4,7 @@
 
 using namespace std;
 
-ByteStream::ByteStream( uint64_t capacity )
-  : capacity_( capacity + 1 ), buffer_( string( capacity + 1, 0 ) )
-{}
+ByteStream::ByteStream( uint64_t capacity ) : capacity_( capacity + 1 ), buffer_( string( capacity + 1, 0 ) ) {}
 
 bool ByteStream::is_full() const
 {
@@ -24,7 +22,7 @@ void ByteStream::push( char ch )
   tail_ += 1;
   if ( tail_ == capacity_ ) {
     const size_t len = tail_ - head_;
-    std::copy( buffer_.begin() + head_, buffer_.end(), buffer_.begin() );
+    std::copy( buffer_.begin() + static_cast<int64_t>( head_ ), buffer_.end(), buffer_.begin() );
     head_ = 0;
     tail_ = len;
   }
@@ -37,14 +35,14 @@ char ByteStream::pop()
   return ch;
 }
 
-void Writer::push( string data )
+void Writer::push( const string& data )
 {
-  for ( const char i : data ) {
+  for ( const char ch : data ) {
     if ( ByteStream::is_full() ) {
       return;
     }
     bytes_pushed_ += 1;
-    ByteStream::push( data[i] );
+    ByteStream::push( ch );
   }
 }
 
@@ -75,7 +73,7 @@ uint64_t Writer::bytes_pushed() const
 
 string_view Reader::peek() const
 {
-  return { buffer_.begin() + head_, buffer_.begin() + tail_ };
+  return { buffer_.begin() + static_cast<int64_t>( head_ ), buffer_.begin() + static_cast<int64_t>( tail_ ) };
 }
 
 bool Reader::is_finished() const

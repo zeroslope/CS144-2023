@@ -3,9 +3,23 @@
 #include "byte_stream.hh"
 
 #include <string>
+#include <vector>
 
 class Reassembler
 {
+  bool has_init_ { false };
+
+  uint64_t next_index_ { 0 };
+  uint64_t buf_index_ { 0 };
+  uint64_t bytes_pending_ { 0 };
+  int64_t last_index_ { -1 };
+
+  std::size_t cap_ { 0 };
+  std::vector<bool> vis {};
+  std::string buffer_ {};
+
+  void handle_contiguous_caches( uint64_t cur_cap, Writer& output );
+
 public:
   /*
    * Insert a new substring to be reassembled into a ByteStream.
