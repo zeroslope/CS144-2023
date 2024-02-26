@@ -63,11 +63,12 @@ void TCPSender::fill_window( Reader& outbound_stream )
     end_ = true;
   }
 
+  // ignore empty message
   if ( msg.sequence_length() == 0 ) {
     return;
   }
 
-  if ( !retransmission_timer_.has_value() ) {
+  if ( outstanding_msg_queue_.empty() ) {
     retransmission_timer_ = tick_;
   }
 
@@ -137,14 +138,14 @@ void TCPSender::receive( const TCPReceiverMessage& msg )
 void TCPSender::tick( const size_t ms_since_last_tick )
 {
   tick_ += ms_since_last_tick;
-  // retransmission_timer_ 非空，就意味着 outstanding_msg_queue_ 非空，后面优化一下
-  if ( retransmission_timer_.has_value() && tick_ - retransmission_timer_.value() >= RTO_timeout_ ) {
+  if ( !outstanding_msg_queue_.empty() && tick_ - retransmission_timer_.value() >= RTO_timeout_ ) {
     msg_queue_.push( outstanding_msg_queue_.front() );
 
+    // 见文档中限制条件
     if ( receiver_window_size_ > 0 ) {
       RTO_timeout_ *= 2;
+      consecutive_retransmission_ += 1;
     }
     retransmission_timer_ = tick_;
-    consecutive_retransmission_ += 1;
   }
 }
