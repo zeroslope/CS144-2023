@@ -10,13 +10,21 @@ class TCPSender
   Wrap32 isn_;
   uint64_t initial_RTO_ms_;
 
-  uint64_t abs_idx_ { 0 };
+  uint64_t next_seqno_ { 0 };
   std::queue<TCPSenderMessage> msg_queue_ {};
   std::queue<TCPSenderMessage> outstanding_msg_queue_ {};
-  bool has_syn_ { false };
-  // windows size
-  // bytes in flight
+  bool end_ { false };
   uint64_t bytes_in_flight_ { 0 };
+  // 初始化为1，否则 tick 里面 RTO_timeout_ 判断会出错
+  uint64_t receiver_window_size_ { 1 };
+
+  uint64_t tick_ { 0 };
+  uint64_t consecutive_retransmission_ { 0 };
+  uint64_t RTO_timeout_;
+  std::optional<uint64_t> retransmission_timer_ {};
+
+  void fill_window( Reader& outbound_stream );
+  bool is_window_not_full( uint64_t window_size );
 
 public:
   /* Construct TCP sender with given default Retransmission Timeout and possible ISN */
