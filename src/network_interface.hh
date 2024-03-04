@@ -11,6 +11,9 @@
 #include <unordered_map>
 #include <utility>
 
+const size_t CACHE_TIMEOUT = 30000;
+const size_t DEBOUNCE_TIMEOUT = 5000;
+
 // A "network interface" that connects IP (the internet layer, or network layer)
 // with Ethernet (the network access layer, or link layer).
 
@@ -40,6 +43,13 @@ private:
 
   // IP (known as Internet-layer or network-layer) address of the interface
   Address ip_address_;
+
+  std::queue<EthernetFrame> frame_queue_ {};
+  std::unordered_map<uint32_t, std::queue<InternetDatagram>> ip_dgram_map_ {};
+  std::unordered_map<uint32_t, EthernetAddress> ip2mac_ {};
+  
+  size_t tick_ {0};
+  std::unordered_map<uint32_t, size_t> ip_tick_ {};
 
 public:
   // Construct a network interface with given Ethernet (network-access-layer) and IP (internet-layer)
