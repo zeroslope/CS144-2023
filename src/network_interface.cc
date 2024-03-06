@@ -14,11 +14,11 @@ NetworkInterface::NetworkInterface( const EthernetAddress& ethernet_address, con
        << ip_address.ip() << "\n";
 }
 
-ARPMessage make_arp_( const uint16_t opcode,
-                      const EthernetAddress sender_ethernet_address,
-                      const uint32_t& sender_ip_address,
-                      const EthernetAddress target_ethernet_address,
-                      const uint32_t& target_ip_address )
+ARPMessage pack_arp( const uint16_t opcode,
+                     const EthernetAddress sender_ethernet_address,
+                     const uint32_t& sender_ip_address,
+                     const EthernetAddress target_ethernet_address,
+                     const uint32_t& target_ip_address )
 {
   ARPMessage arp;
   arp.opcode = opcode;
@@ -29,10 +29,10 @@ ARPMessage make_arp_( const uint16_t opcode,
   return arp;
 }
 
-EthernetFrame make_frame_( const EthernetAddress& src,
-                           const EthernetAddress& dst,
-                           const uint16_t type,
-                           vector<Buffer> payload )
+EthernetFrame pack_frame( const EthernetAddress& src,
+                          const EthernetAddress& dst,
+                          const uint16_t type,
+                          vector<Buffer> payload )
 {
   EthernetFrame frame;
   frame.header.src = src;
@@ -59,7 +59,7 @@ void NetworkInterface::send_datagram( const InternetDatagram& dgram, const Addre
   if ( ip2mac_.contains( next_hop_ip ) ) {
     auto payload = serialize( dgram );
     EthernetFrame eth_frame
-      = make_frame_( ethernet_address_, ip2mac_[next_hop_ip], EthernetHeader::TYPE_IPv4, std::move( payload ) );
+      = pack_frame( ethernet_address_, ip2mac_[next_hop_ip], EthernetHeader::TYPE_IPv4, std::move( payload ) );
     frame_queue_.push( std::move( eth_frame ) );
   } else {
     if ( ip_tick_.contains( next_hop_ip ) && tick_ - ip_tick_[next_hop_ip] < DEBOUNCE_TIMEOUT ) {
@@ -104,7 +104,7 @@ optional<InternetDatagram> NetworkInterface::recv_frame( const EthernetFrame& fr
           auto payload = serialize( dgram_queue.front() );
           dgram_queue.pop();
 
-          EthernetFrame eth_frame = make_frame_(
+          EthernetFrame eth_frame = pack_frame(
             ethernet_address_, msg.sender_ethernet_address, EthernetHeader::TYPE_IPv4, std::move( payload ) );
           frame_queue_.push( std::move( eth_frame ) );
         }
@@ -113,14 +113,14 @@ optional<InternetDatagram> NetworkInterface::recv_frame( const EthernetFrame& fr
       ip_tick_[msg.sender_ip_address] = tick_;
       // TODO: send quene messages
       ip2mac_[msg.sender_ip_address] = msg.sender_ethernet_address;
-      auto arp = make_arp_( ARPMessage::OPCODE_REPLY,
-                            ethernet_address_,
-                            ip_address_.ipv4_numeric(),
-                            frame.header.src,
-                            msg.sender_ip_address );
+      auto arp = pack_arp( ARPMessage::OPCODE_REPLY,
+                           ethernet_address_,
+                           ip_address_.ipv4_numeric(),
+                           frame.header.src,
+                           msg.sender_ip_address );
       auto payload = serialize( arp );
       auto eth_frame
-        = make_frame_( ethernet_address_, frame.header.src, EthernetHeader::TYPE_ARP, std::move( payload ) );
+        = pack_frame( ethernet_address_, frame.header.src, EthernetHeader::TYPE_ARP, std::move( payload ) );
       frame_queue_.push( std::move( eth_frame ) );
     }
   } else if ( frame.header.type == EthernetHeader::TYPE_IPv4 ) {

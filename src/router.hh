@@ -48,12 +48,30 @@ public:
   }
 };
 
+struct RouterEntry
+{
+  uint32_t route_prefix;
+  uint8_t prefix_length;
+  std::optional<Address> next_hop;
+  size_t interface_num;
+
+  bool match( uint32_t ip_addr )
+  {
+    uint32_t len = static_cast<uint32_t>( 32 - prefix_length );
+    if ( len == 32 ) {
+      return true;
+    }
+    return ( route_prefix >> len ) == ( ip_addr >> len );
+  }
+};
+
 // A router that has multiple network interfaces and
 // performs longest-prefix-match routing between them.
 class Router
 {
   // The router's collection of network interfaces
   std::vector<AsyncNetworkInterface> interfaces_ {};
+  std::vector<RouterEntry> entries_ {};
 
 public:
   // Add an interface to the router
@@ -81,4 +99,6 @@ public:
   // route with the longest prefix_length that matches the datagram's
   // destination address.
   void route();
+
+  std::optional<size_t> match( uint32_t ip_addr );
 };

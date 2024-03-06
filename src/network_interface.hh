@@ -1,6 +1,7 @@
 #pragma once
 
 #include "address.hh"
+#include "arp_message.hh"
 #include "ethernet_frame.hh"
 #include "ipv4_datagram.hh"
 
@@ -47,8 +48,8 @@ private:
   std::queue<EthernetFrame> frame_queue_ {};
   std::unordered_map<uint32_t, std::queue<InternetDatagram>> ip_dgram_map_ {};
   std::unordered_map<uint32_t, EthernetAddress> ip2mac_ {};
-  
-  size_t tick_ {0};
+
+  size_t tick_ { 0 };
   std::unordered_map<uint32_t, size_t> ip_tick_ {};
 
 public:
@@ -75,3 +76,14 @@ public:
   // Called periodically when time elapses
   void tick( size_t ms_since_last_tick );
 };
+
+ARPMessage pack_arp( const uint16_t opcode,
+                     const EthernetAddress sender_ethernet_address,
+                     const uint32_t& sender_ip_address,
+                     const EthernetAddress target_ethernet_address,
+                     const uint32_t& target_ip_address );
+
+EthernetFrame pack_frame( const EthernetAddress& src,
+                          const EthernetAddress& dst,
+                          const uint16_t type,
+                          std::vector<Buffer> payload );
